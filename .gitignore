@@ -1,0 +1,19 @@
+# Database & WAL files
+*.db
+*.db-wal
+*.db-shm
+
+# Logs
+*.log
+
+# Python venv
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Temp/working files
+/tmp/
+dashboard_working.json

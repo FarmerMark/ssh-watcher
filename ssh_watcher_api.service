@@ -1,0 +1,15 @@
+[Unit]
+Description=SSH Watcher REST API
+After=network.target ssh_watcher.service
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/opt/ssh_watcher/venv/bin/python /opt/ssh_watcher/api.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

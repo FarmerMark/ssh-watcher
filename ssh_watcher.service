@@ -1,0 +1,15 @@
+[Unit]
+Description=SSH Watcher - Monitor failed logins and fingerprint attackers
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/ssh_watcher/ssh_watcher.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
