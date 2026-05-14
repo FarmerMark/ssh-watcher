@@ -475,19 +475,34 @@ def scan_worker(scan_queue, conn, db_lock):
             # 7. AI assessment (runs after all data is collected)
             try:
                 from assess import generate_assessment
+                _attacker_cols = [
+                    "ip", "org", "isp", "asn", "country", "city", "attempts",
+                    "vt_malicious", "vt_suspicious",
+                    "abuseipdb_score", "abuseipdb_reports", "abuseipdb_categories",
+                    "greynoise_classification", "greynoise_name", "greynoise_tags",
+                    "greynoise_noise", "greynoise_riot",
+                ]
                 with db_lock:
                     row = conn.execute(
                         "SELECT ip, org, isp, asn, country, city, attempts, "
-                        "vt_malicious, vt_suspicious FROM attackers WHERE ip=?", (ip,)
+                        "vt_malicious, vt_suspicious, "
+                        "abuseipdb_score, abuseipdb_reports, abuseipdb_categories, "
+                        "greynoise_classification, greynoise_name, greynoise_tags, "
+                        "greynoise_noise, greynoise_riot "
+                        "FROM attackers WHERE ip=?", (ip,)
                     ).fetchone()
                     scan = conn.execute(
                         "SELECT open_ports FROM scans WHERE ip=? ORDER BY scanned_at DESC LIMIT 1", (ip,)
                     ).fetchone()
                     if row:
-                        assessment = generate_assessment(dict(row), dict(scan) if scan else None)
+                        row_dict = dict(zip(_attacker_cols, row))
+                        scan_dict = {"open_ports": scan[0]} if scan else None
+                        assessment = generate_assessment(row_dict, scan_dict)
                         conn.execute("UPDATE attackers SET ai_assessment=? WHERE ip=?", (assessment, ip))
                         conn.commit()
-                log.info(f"[ASSESS] {ip} — {assessment[:80]}...")
+                        log.info(f"[ASSESS] {ip} — {assessment[:80]}...")
+                    else:
+                        log.warning(f"[ASSESS] {ip} — row not found in DB")
             except Exception as e:
                 log.warning(f"[ASSESS] {ip} — {e}")
 
