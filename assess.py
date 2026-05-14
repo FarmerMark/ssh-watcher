@@ -257,6 +257,17 @@ def generate_assessment(row: dict, latest_scan: dict = None) -> str:
     if gn_desc:
         sentence += f" {gn_desc}."
 
+    # Append CVE intel
+    vuln_count = row.get("vuln_count") or 0
+    max_cvss   = row.get("max_cvss")
+    if vuln_count and vuln_count > 0:
+        if max_cvss and max_cvss >= 9.0:
+            sentence += f" Shodan found {vuln_count} CVEs on this host including critical severity (max CVSS {max_cvss:.1f}) — the attacker's own machine is wide open."
+        elif max_cvss and max_cvss >= 7.0:
+            sentence += f" Shodan found {vuln_count} CVEs on this host (max CVSS {max_cvss:.1f}) — likely an unpatched system being used as a bot."
+        else:
+            sentence += f" Shodan found {vuln_count} CVEs on this host — further evidence of a poorly maintained system."
+
     # Append port intel
     if latest_scan:
         port_note = describe_ports(latest_scan.get("open_ports"))
@@ -279,14 +290,19 @@ def run_backfill():
         conn.commit()
         log.info("Added ai_assessment column")
 
-    ips = conn.execute(
-        "SELECT ip, org, isp, asn, country, city, attempts, "
-        "vt_malicious, vt_suspicious, "
-        "abuseipdb_score, abuseipdb_reports, abuseipdb_categories, "
-        "greynoise_classification, greynoise_name, greynoise_tags, "
-        "greynoise_noise, greynoise_riot "
-        "FROM attackers ORDER BY attempts DESC"
-    ).fetchall()
+    ips = conn.execute("""
+        SELECT a.ip, a.org, a.isp, a.asn, a.country, a.city, a.attempts,
+               a.vt_malicious, a.vt_suspicious,
+               a.abuseipdb_score, a.abuseipdb_reports, a.abuseipdb_categories,
+               a.greynoise_classification, a.greynoise_name, a.greynoise_tags,
+               a.greynoise_noise, a.greynoise_riot,
+               COUNT(v.cve_id) as vuln_count,
+               MAX(v.cvss) as max_cvss
+        FROM attackers a
+        LEFT JOIN vulnerabilities v ON a.ip = v.ip
+        GROUP BY a.ip
+        ORDER BY a.attempts DESC
+    """).fetchall()
 
     log.info(f"Generating assessments for {len(ips)} IPs...")
     for row in ips:

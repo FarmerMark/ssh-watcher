@@ -287,6 +287,27 @@ def countries():
     } for r in rows])
 
 
+@app.route("/api/timeline/<path:ip>")
+def timeline(ip):
+    """Hourly attack counts for a given IP."""
+    db   = get_db()
+    rows = db.execute("""
+        SELECT strftime('%Y-%m-%dT%H:00:00', ts) as hour, COUNT(*) as cnt
+        FROM attempts WHERE ip=?
+        GROUP BY hour ORDER BY hour
+    """, (ip,)).fetchall()
+    return jsonify([{"ts": r["hour"], "cnt": r["cnt"]} for r in rows])
+
+
+@app.route("/api/attackers/<path:ip>/notify", methods=["POST"])
+def mark_notified(ip):
+    """Mark an IP as Discord-notified so it isn't re-announced."""
+    db = get_db()
+    db.execute("UPDATE attackers SET discord_notified=1 WHERE ip=?", (ip,))
+    db.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/ip/<path:ip>")
 def ip_detail_page(ip):
     """Human-readable IP detail page — dark-themed, linked from Grafana tables."""
@@ -401,6 +422,7 @@ def ip_detail_page(ip):
     }}
     a {{ color: #6ea6d4; text-decoration: none; }}
     a:hover {{ text-decoration: underline; }}
+    .chart-wrap {{ background: #1a1d24; border: 1px solid #2a2d35; border-radius: 8px; padding: 16px; }}
     h1 {{ font-size: 1.8rem; font-weight: 700; color: #f0f0f0; margin-bottom: 4px; }}
     h2 {{ font-size: 1rem; font-weight: 600; color: #aaa; text-transform: uppercase;
           letter-spacing: .08em; margin: 28px 0 12px; border-bottom: 1px solid #2a2d35;
@@ -515,6 +537,7 @@ def ip_detail_page(ip):
     .ext-btn:hover {{ background: #272c36; border-color: #6ea6d4; }}
     .section {{ margin-bottom: 8px; }}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="header">
@@ -567,10 +590,46 @@ def ip_detail_page(ip):
   {'<table class="data-table"><thead><tr><th>CVE</th><th>CVSS</th><th>Summary</th></tr></thead><tbody>' + vulns_html + '</tbody></table>' if vulns_html else "<p class='muted'>No CVEs found.</p>"}
   </div>
 
+  <h2>Attack Timeline</h2>
+  <div class="section">
+    <div class="chart-wrap"><canvas id="timeline-chart" height="80"></canvas></div>
+  </div>
+
   <h2>Recent Login Attempts (last 25)</h2>
   <div class="section">
   {'<table class="data-table"><thead><tr><th>Timestamp</th><th>Log Line</th></tr></thead><tbody>' + attempts_html + '</tbody></table>' if attempts_html else "<p class='muted'>No attempts recorded.</p>"}
   </div>
+
+<script>
+fetch('/api/timeline/{ip}')
+  .then(r => r.json())
+  .then(data => {{
+    if (!data.length) return;
+    const labels = data.map(d => d.ts.slice(5,16).replace('T',' '));
+    const counts = data.map(d => d.cnt);
+    new Chart(document.getElementById('timeline-chart'), {{
+      type: 'bar',
+      data: {{
+        labels,
+        datasets: [{{
+          label: 'Attempts',
+          data: counts,
+          backgroundColor: 'rgba(91,141,217,0.5)',
+          borderColor:     'rgba(91,141,217,1)',
+          borderWidth: 1
+        }}]
+      }},
+      options: {{
+        responsive: true,
+        plugins: {{ legend: {{ display: false }} }},
+        scales: {{
+          x: {{ ticks: {{ color: '#888', maxRotation: 60, font: {{ size: 10 }} }} }},
+          y: {{ ticks: {{ color: '#888' }}, grid: {{ color: '#2a2d35' }}, beginAtZero: true }}
+        }}
+      }}
+    }});
+  }});
+</script>
 </body>
 </html>"""
     return html

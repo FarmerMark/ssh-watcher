@@ -125,6 +125,7 @@ def init_db(path: str) -> sqlite3.Connection:
         ("vt_reputation",    "INTEGER"),
         ("vt_checked_at",    "TEXT"),
         ("shodan_checked_at","TEXT"),
+        ("discord_notified", "INTEGER DEFAULT 0"),
     ]
     for col, typedef in migrations:
         if col not in existing:
@@ -488,7 +489,7 @@ def scan_worker(scan_queue, conn, db_lock):
                         store_greynoise(conn, ip, gn_class, gn_name, gn_tags, noise, riot)
                     log.info(f"[GN]   {ip} — class={gn_class} name={gn_name} noise={noise} riot={riot}")
 
-            # 7. AI assessment (runs after all data is collected)
+            # 7. AI assessment (runs after all data is collected, including CVEs)
             try:
                 from assess import generate_assessment
                 _attacker_cols = [
@@ -497,16 +498,22 @@ def scan_worker(scan_queue, conn, db_lock):
                     "abuseipdb_score", "abuseipdb_reports", "abuseipdb_categories",
                     "greynoise_classification", "greynoise_name", "greynoise_tags",
                     "greynoise_noise", "greynoise_riot",
+                    "vuln_count", "max_cvss",
                 ]
                 with db_lock:
-                    row = conn.execute(
-                        "SELECT ip, org, isp, asn, country, city, attempts, "
-                        "vt_malicious, vt_suspicious, "
-                        "abuseipdb_score, abuseipdb_reports, abuseipdb_categories, "
-                        "greynoise_classification, greynoise_name, greynoise_tags, "
-                        "greynoise_noise, greynoise_riot "
-                        "FROM attackers WHERE ip=?", (ip,)
-                    ).fetchone()
+                    row = conn.execute("""
+                        SELECT a.ip, a.org, a.isp, a.asn, a.country, a.city, a.attempts,
+                               a.vt_malicious, a.vt_suspicious,
+                               a.abuseipdb_score, a.abuseipdb_reports, a.abuseipdb_categories,
+                               a.greynoise_classification, a.greynoise_name, a.greynoise_tags,
+                               a.greynoise_noise, a.greynoise_riot,
+                               COUNT(v.cve_id) as vuln_count,
+                               MAX(v.cvss) as max_cvss
+                        FROM attackers a
+                        LEFT JOIN vulnerabilities v ON a.ip = v.ip
+                        WHERE a.ip=?
+                        GROUP BY a.ip
+                    """, (ip,)).fetchone()
                     scan = conn.execute(
                         "SELECT open_ports FROM scans WHERE ip=? ORDER BY scanned_at DESC LIMIT 1", (ip,)
                     ).fetchone()
