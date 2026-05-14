@@ -864,6 +864,24 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ip"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "\ud83d\udd0d View Details",
+                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1183,6 +1201,16 @@
               {
                 "id": "custom.width",
                 "value": 130
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "\ud83d\udd0d View Details",
+                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                  }
+                ]
               }
             ]
           },
@@ -1533,6 +1561,24 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ip"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "\ud83d\udd0d View Details",
+                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1612,5 +1658,5 @@
   "timezone": "browser",
   "title": "SSH Watcher",
   "uid": "ssh-watcher-v3",
-  "version": 24
+  "version": 25
 }
