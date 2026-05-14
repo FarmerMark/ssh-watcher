@@ -81,14 +81,35 @@ def lookup_shodan(ip):
         import shodan
         api = shodan.Shodan(SHODAN_KEY)
         host = api.host(ip)
-        vulns = host.get("vulns", {})
-        if isinstance(vulns, dict):
-            return {cve: {"cvss": info.get("cvss", 0), "summary": info.get("summary", "")}
-                    for cve, info in vulns.items()}
-        elif isinstance(vulns, list):
-            # Free tier returns just CVE ID strings
-            return {str(cve): {"cvss": None, "summary": ""} for cve in vulns}
-        return {}
+        result = {}
+
+        # Primary: per-service banner vulns — has full CVSS + summaries on free tier
+        for svc in host.get("data", []):
+            svc_vulns = svc.get("vulns", {})
+            if not isinstance(svc_vulns, dict):
+                continue
+            for cve_id, info in svc_vulns.items():
+                if cve_id not in result:
+                    result[cve_id] = {
+                        "cvss":    info.get("cvss") or info.get("cvss_v2"),
+                        "summary": info.get("summary", ""),
+                    }
+
+        # Fallback: top-level host['vulns'] for any CVEs not in service data
+        top_vulns = host.get("vulns", {})
+        if isinstance(top_vulns, dict):
+            for cve_id, info in top_vulns.items():
+                if cve_id not in result:
+                    result[cve_id] = {
+                        "cvss":    info.get("cvss") or info.get("cvss_v2"),
+                        "summary": info.get("summary", ""),
+                    }
+        elif isinstance(top_vulns, list):
+            for cve_id in top_vulns:
+                if str(cve_id) not in result:
+                    result[str(cve_id)] = {"cvss": None, "summary": ""}
+
+        return result
     except Exception as e:
         log.warning(f"[SHDN] {ip} — {e}")
     return {}

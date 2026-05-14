@@ -326,19 +326,35 @@ def lookup_shodan(ip):
         import shodan
         api = shodan.Shodan(SHODAN_KEY)
         host = api.host(ip)
-        vulns = host.get("vulns", {})
-        # Normalise — Shodan returns {CVE-ID: {cvss, summary, references, ...}}
         result = {}
-        # Shodan free tier returns a list of CVE IDs; paid returns a dict with details
-        if isinstance(vulns, dict):
-            for cve_id, info in vulns.items():
-                result[cve_id] = {
-                    "cvss":    info.get("cvss", info.get("cvss_v2", 0)),
-                    "summary": info.get("summary", ""),
-                }
-        elif isinstance(vulns, list):
-            for cve_id in vulns:
-                result[str(cve_id)] = {"cvss": None, "summary": ""}
+
+        # Primary source: per-service banner vulns — has full CVSS + summaries
+        # even on the free tier (richer than top-level host['vulns'])
+        for svc in host.get("data", []):
+            svc_vulns = svc.get("vulns", {})
+            if not isinstance(svc_vulns, dict):
+                continue
+            for cve_id, info in svc_vulns.items():
+                if cve_id not in result:
+                    result[cve_id] = {
+                        "cvss":    info.get("cvss") or info.get("cvss_v2"),
+                        "summary": info.get("summary", ""),
+                    }
+
+        # Fallback: top-level host['vulns'] catches any CVEs not in service data
+        top_vulns = host.get("vulns", {})
+        if isinstance(top_vulns, dict):
+            for cve_id, info in top_vulns.items():
+                if cve_id not in result:
+                    result[cve_id] = {
+                        "cvss":    info.get("cvss") or info.get("cvss_v2"),
+                        "summary": info.get("summary", ""),
+                    }
+        elif isinstance(top_vulns, list):
+            for cve_id in top_vulns:
+                if str(cve_id) not in result:
+                    result[str(cve_id)] = {"cvss": None, "summary": ""}
+
         ports = host.get("ports", [])
         log.info(f"[SHDN] {ip} — {len(result)} CVEs, ports: {ports}")
         return result
