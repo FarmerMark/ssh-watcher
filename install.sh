@@ -173,8 +173,10 @@ curl -sf -u admin:admin -X POST http://localhost:3000/api/datasources \
   }' &>/dev/null && success "Datasource created." || warn "Datasource may already exist — continuing."
 
 # Import dashboard
-if [[ -f "$INSTALL_DIR/dashboard.json" ]]; then
-    DASHBOARD=$(cat "$INSTALL_DIR/dashboard.json")
+DASH_FILE="$INSTALL_DIR/dashboard_deploy.json"
+[[ -f "$DASH_FILE" ]] || DASH_FILE="$INSTALL_DIR/dashboard.json"
+if [[ -f "$DASH_FILE" ]]; then
+    DASHBOARD=$(cat "$DASH_FILE")
     HTTP=$(curl -sf -o /dev/null -w "%{http_code}" -u admin:admin \
       -X POST http://localhost:3000/api/dashboards/db \
       -H "Content-Type: application/json" \
