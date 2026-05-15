@@ -108,10 +108,16 @@ GRAFANA_INI="/etc/grafana/grafana.ini"
 patch_ini() {
     local section="$1" key="$2" value="$3"
     if grep -q "^${key} = " "$GRAFANA_INI"; then
+        # Key exists and is active — update it
         sed -i "s|^${key} = .*|${key} = ${value}|" "$GRAFANA_INI"
+    elif grep -q "^;${key} = " "$GRAFANA_INI"; then
+        # Key exists but is commented out — uncomment and set
+        sed -i "s|^;${key} = .*|${key} = ${value}|" "$GRAFANA_INI"
     elif grep -q "^\[${section}\]" "$GRAFANA_INI"; then
+        # Section exists but key is missing — append after section header
         sed -i "/^\[${section}\]/a ${key} = ${value}" "$GRAFANA_INI"
     else
+        # Section doesn't exist — add it
         echo -e "\n[${section}]\n${key} = ${value}" >> "$GRAFANA_INI"
     fi
 }
