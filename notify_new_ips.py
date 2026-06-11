@@ -10,10 +10,18 @@ import urllib.request
 import urllib.error
 import json
 import sys
+import os
 
-DB_PATH = "/opt/ssh_watcher/watcher.db"
-DISCORD_TOKEN = "REDACTED"
-CHANNEL_ID = "1503737842197725264"
+# Load from config.py if present, else fall back to environment variables
+try:
+    sys.path.insert(0, os.path.dirname(__file__))
+    from config import DISCORD_TOKEN, DISCORD_CHANNEL_ID, DB_PATH
+except ImportError:
+    DISCORD_TOKEN     = os.environ.get("DISCORD_TOKEN", "")
+    DISCORD_CHANNEL_ID = os.environ.get("DISCORD_CHANNEL_ID", "")
+    DB_PATH           = "/opt/ssh_watcher/watcher.db"
+
+CHANNEL_ID = DISCORD_CHANNEL_ID
 API_URL = f"https://discord.com/api/v10/channels/{CHANNEL_ID}/messages"
 
 

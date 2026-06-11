@@ -20,6 +20,11 @@ ABUSEIPDB_KEY = "YOUR_ABUSEIPDB_API_KEY"
 # GreyNoise — https://viz.greynoise.io → Account → API Access
 GREYNOISE_KEY = "YOUR_GREYNOISE_API_KEY"
 
+# ── Discord ──────────────────────────────────────────────────────────────────
+# Bot token from https://discord.com/developers/applications → Bot → Token
+DISCORD_TOKEN      = "YOUR_DISCORD_BOT_TOKEN"
+DISCORD_CHANNEL_ID = "YOUR_CHANNEL_ID"
+
 # ── Tuning ────────────────────────────────────────────────────────────────────
 RESCAN_HRS   = 24    # Hours before re-scanning same IP
 WORKERS      = 3     # Parallel enrichment workers
