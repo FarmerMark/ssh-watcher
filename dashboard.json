@@ -877,7 +877,7 @@
                   {
                     "targetBlank": true,
                     "title": "\ud83d\udd0d View Details",
-                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                    "url": "http://YOUR_SERVER_IP:8888/ip/${__value.raw}"
                   }
                 ]
               }
@@ -1208,7 +1208,7 @@
                   {
                     "targetBlank": true,
                     "title": "\ud83d\udd0d View Details",
-                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                    "url": "http://YOUR_SERVER_IP:8888/ip/${__value.raw}"
                   }
                 ]
               }
@@ -1574,7 +1574,7 @@
                   {
                     "targetBlank": true,
                     "title": "\ud83d\udd0d View Details",
-                    "url": "http://18.217.238.93:8888/ip/${__value.raw}"
+                    "url": "http://YOUR_SERVER_IP:8888/ip/${__value.raw}"
                   }
                 ]
               }

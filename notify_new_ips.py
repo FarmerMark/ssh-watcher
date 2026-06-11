@@ -16,10 +16,12 @@ import os
 try:
     sys.path.insert(0, os.path.dirname(__file__))
     from config import DISCORD_TOKEN, DISCORD_CHANNEL_ID, DB_PATH
+    SERVER_URL = getattr(__import__('config'), 'SERVER_URL', 'http://localhost:8888')
 except ImportError:
-    DISCORD_TOKEN     = os.environ.get("DISCORD_TOKEN", "")
+    DISCORD_TOKEN      = os.environ.get("DISCORD_TOKEN", "")
     DISCORD_CHANNEL_ID = os.environ.get("DISCORD_CHANNEL_ID", "")
-    DB_PATH           = "/opt/ssh_watcher/watcher.db"
+    DB_PATH            = "/opt/ssh_watcher/watcher.db"
+    SERVER_URL         = os.environ.get("SERVER_URL", "http://localhost:8888")
 
 CHANNEL_ID = DISCORD_CHANNEL_ID
 API_URL = f"https://discord.com/api/v10/channels/{CHANNEL_ID}/messages"
@@ -84,7 +86,7 @@ def main():
 
         message = (
             f"🚨 **New SSH Attacker Detected**\n"
-            f"**IP:** `{ip}` — [View Details](http://18.217.238.93:8888/ip/{ip})\n"
+            f"**IP:** `{ip}` — [View Details]({SERVER_URL}/ip/{ip})\n"
             f"📍 {city}, {country} — {org}\n"
             f"⚔️ **{attempts}** login attempts\n"
             f"🛡️ AbuseIPDB: **{abuse_score}%** | VT Malicious: **{vt_mal}** | VT Suspicious: **{vt_sus}**\n"

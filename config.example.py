@@ -24,6 +24,7 @@ GREYNOISE_KEY = "YOUR_GREYNOISE_API_KEY"
 # Bot token from https://discord.com/developers/applications → Bot → Token
 DISCORD_TOKEN      = "YOUR_DISCORD_BOT_TOKEN"
 DISCORD_CHANNEL_ID = "YOUR_CHANNEL_ID"
+SERVER_URL         = "http://YOUR_SERVER_IP:8888"  # Public URL for IP detail links in Discord
 
 # ── Tuning ────────────────────────────────────────────────────────────────────
 RESCAN_HRS   = 24    # Hours before re-scanning same IP
