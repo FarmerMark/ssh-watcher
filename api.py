@@ -16,7 +16,7 @@ Endpoints:
 
 import sqlite3, json
 from datetime import datetime, timezone, timedelta
-from flask import Flask, jsonify, request, abort, render_template_string
+from flask import Flask, jsonify, request, abort, render_template_string, g
 
 DB_PATH  = "/opt/ssh_watcher/watcher.db"
 API_PORT = 8888
@@ -24,9 +24,18 @@ app = Flask(__name__)
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if 'db' not in g:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        g.db = conn
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(e=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 
 def parse_ports(ports_json):

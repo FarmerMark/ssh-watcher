@@ -86,6 +86,9 @@ nano config.py
 | `SHODAN_KEY` | https://account.shodan.io |
 | `ABUSEIPDB_KEY` | https://www.abuseipdb.com/account/api |
 | `GREYNOISE_KEY` | https://viz.greynoise.io → Account → API Access |
+| `DISCORD_TOKEN` | https://discord.com/developers/applications → Your App → Bot → Token |
+| `DISCORD_CHANNEL_ID` | Right-click the target channel in Discord → Copy Channel ID (requires Developer Mode) |
+| `SERVER_URL` | Public URL of your server, e.g. `http://1.2.3.4:8888` — used for IP detail links in Discord notifications |
 
 ### 4. Database
 
